@@ -1,37 +1,65 @@
-import streamlit as st
-from google_auth_oauthlib.flow import Flow
-import os
-import json
-import requests
+from dataclasses import dataclass, field
+from typing import List, Set
+import uuid
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+DIAS_SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"]
 
-def get_google_flow():
-    with open("client_secret.json", "r") as f:
-        client_config = json.load(f)["web"]
-    return Flow.from_client_config(
-        client_config,
-        scopes=[
-            "https://www.googleapis.com/auth/userinfo.email",
-            "https://www.googleapis.com/auth/userinfo.profile",
-            "openid"
-        ],
-        redirect_uri="http://localhost:8501"
-    )
+@dataclass
+class DisciplinaTurma:
+    nome: str
+    carga_semanal: int
+    professor: str = ""
+    professor_fixo: bool = False
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
-def login():
-    flow = get_google_flow()
-    auth_url, _ = flow.authorization_url(prompt="consent")
-    st.markdown(f'<a href="{auth_url}" style="display:inline-block;background:#4285F4;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">🔐 Login com Google</a>', unsafe_allow_html=True)
+@dataclass
+class Disciplina:
+    nome: str
+    carga_semanal: int
+    tipo: str
+    series: List[str]
+    cor_fundo: str = "#4A90E2"
+    cor_fonte: str = "#FFFFFF"
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
-def handle_redirect():
-    if "code" in st.query_params:
-        flow = get_google_flow()
-        flow.fetch_token(code=st.query_params["code"])
-        resp = requests.get(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
-            headers={"Authorization": f"Bearer {flow.credentials.token}"}
-        )
-        st.session_state.user = resp.json()
-        st.query_params.clear()
-        st.rerun()
+@dataclass
+class Professor:
+    nome: str
+    disciplinas: List[str]
+    disponibilidade_dias: Set[str]
+    disponibilidade_horarios: Set[int]
+    restricoes: Set[str] = field(default_factory=set)
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+@dataclass
+class Turma:
+    nome: str
+    serie: str
+    turno: str
+    tipo: str = "regular"
+    disciplinas_turma: List[DisciplinaTurma] = field(default_factory=list)
+    regras_neuro: List[str] = field(default_factory=list)
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+@dataclass
+class Sala:
+    nome: str
+    capacidade: int = 30
+    tipo: str = "normal"
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+@dataclass
+class Aula:
+    turma: str
+    disciplina: str
+    professor: str
+    dia: str
+    horario: int
+    sala: str = "Sala 1"
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+@dataclass
+class Feriado:
+    str
+    motivo: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
